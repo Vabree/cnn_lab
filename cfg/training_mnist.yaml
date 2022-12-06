@@ -1,0 +1,45 @@
+device: "cpu"
+#Task you want to perform
+#Available tasks : image_classification
+task: image_classification 
+
+#Model you want to train 
+#Available graphs : LeNet5
+model:
+  architecture: LeNet5
+  class_number: 10
+  pretrained_weights: None 
+
+#Dataset type and number of channel
+#Available datasets : MNIST 
+dataset:
+  type: MNIST 
+  channel_number: 1
+  train_path: data/MNIST
+  test_path: data/MNIST
+  transforms:
+    train: 1 
+    test: 1 
+    target: 0
+
+#Loss function you want to use 
+#Available loss for semseg : crossentropy
+criterion: CrossEntropyLoss
+
+#List if hyperparameters
+hyperparameters:
+  epochs: 10
+  learning_rate: 0.001
+  batch_size: 64
+
+#Save name insert None with you don't want to save the model
+saving_name: None
+
+image_classification_metrics:
+  binary_accuracy: 0
+  multiclass_accuracy: 1 
+  multilabel_accuracy: 0
+
+
+semseg_metrics:
+  multiclass_accuracy: 1 
