@@ -1,0 +1,49 @@
+device: "cpu"
+#Task you want to perform
+#Available tasks : image_classification, semseg
+task: semseg 
+
+#Model you want to train 
+#Available graphs : LeNet5, UNet
+model:
+  architecture: UNet
+  class_number: 21
+  pretrained_weights: None 
+
+#Dataset type and number of channel
+#Available datasets : MNIST, cityscapes
+dataset:
+  type: VOC 
+  channel_number: 3
+  train_path: data/VOC
+  test_path: data/VOC
+  transforms:
+    train: 2
+    test: 2 
+    target: 3
+
+#Loss function you want to use 
+#Available loss for semseg : crossentropy
+criterion: CrossEntropyLoss
+
+#List if hyperparameters
+hyperparameters:
+  epochs: 10
+  learning_rate: 0.001
+  batch_size: 4
+
+#Save name insert None with you don't want to save the model
+saving_name: None
+
+image_classification_metrics:
+  class_number: 10
+  binary_accuracy: 0
+  multiclass_accuracy: 1 
+  multilabel_accuracy: 0
+
+semseg_metrics:
+  class_number: 21
+  binary_accuracy: 0
+  multiclass_accuracy: 1 
+  multilabel_accuracy: 0
+

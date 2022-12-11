@@ -13,6 +13,13 @@ def get_datas(config:dict, train_transform, test_transform, target_transform):
                                         target_type='semantic', transform=train_transform, target_transform=target_transform)
         test_data = torchvision.datasets.Cityscapes(config["test_path"], split='test', mode='fine',
                                         target_type='semantic', transform=test_transform, target_transform=target_transform)
+    elif config['type'] == "VOC":
+
+        #Load the dataset
+        train_data = torchvision.datasets.VOCSegmentation(root = config["train_path"], download = False, image_set= 'train',
+                                        transform=train_transform, target_transform=target_transform)
+        test_data = torchvision.datasets.VOCSegmentation(root = config["test_path"], download = False, image_set= 'val',
+                                        transform=train_transform, target_transform=target_transform)
     else:
         raise NameError("dataset_type not available")
 
