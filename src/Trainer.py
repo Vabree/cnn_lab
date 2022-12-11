@@ -44,8 +44,8 @@ class Trainer:
         self.criterion = criterion 
         self.optimizer = optimizer
 
-        self.train_metrics = metrics.clone(prefix='train_')
-        self.test_metrics = metrics.clone(prefix='test_')
+        self.train_metrics = metrics.clone(prefix='train_').to(self.device)
+        self.test_metrics = metrics.clone(prefix='test_').to(self.device)
 
         self.training_loss = []
         self.testing_loss = [] 
@@ -60,8 +60,8 @@ class Trainer:
                 labels = labels.to(self.device)
 
                 #Get ride of dimensions of size 1 to match the loss size wanted
-                if (labels.dim() == 4):
-                    labels = labels.squeeze() 
+                labels = labels.squeeze(dim=1) 
+
                 self.optimizer.zero_grad()
 
                 #Forward pass
@@ -84,12 +84,15 @@ class Trainer:
         running_loss = 0
         with torch.no_grad():
             for images, labels in self.test_dataloader:
+                images = images.to(self.device)
+                labels = labels.to(self.device)
+
+                labels = labels.squeeze(dim=1) 
                 preds = self.model(images)
-                loss = self.criterion(preds, labels)
+                loss = self.criterion(preds, labels.long())
                 self.test_metrics(preds,labels)
 
                 running_loss += loss.item() * images.size(0)
-        
         self.testing_loss.append(running_loss / len(self.test_dataloader.dataset))
 
     def run(self, save_name:str = None)->None:

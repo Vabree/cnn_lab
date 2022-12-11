@@ -1,4 +1,4 @@
-device: "cpu"
+device: "cuda"
 #Task you want to perform
 #Available tasks : image_classification, semseg
 task: semseg 
@@ -7,7 +7,7 @@ task: semseg
 #Available graphs : LeNet5, UNet
 model:
   architecture: UNet
-  class_number: 33
+  class_number: 35
   pretrained_weights: None 
 
 #Dataset type and number of channel
@@ -15,8 +15,8 @@ model:
 dataset:
   type: cityscapes 
   channel_number: 3
-  train_path: data/cityscapes
-  test_path: data/cityscapes
+  train_path: F:\Datasets\CITYSCAPES
+  test_path: F:\Datasets\CITYSCAPES
   transforms:
     train: 2
     test: 2 
