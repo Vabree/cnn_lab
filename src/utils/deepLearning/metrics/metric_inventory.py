@@ -22,7 +22,7 @@ def get_metric(task:str, metric_name: str, class_number: int):
     else:
         raise NameError("Task doesn't exist")
     
-    return MulticlassAccuracy(num_classes=class_number) #MetricCollection(metricCollection)
+    return MetricCollection(metricCollection)
 
 
 def get_metric_test():
