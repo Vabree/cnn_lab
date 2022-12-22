@@ -15,7 +15,7 @@ from torchvision.transforms import ToTensor, Compose, Resize
 
 import plotly.express as px
 import pandas as pd
-
+import numpy as np 
 from tqdm.auto import tqdm
 
 from src.models.model_inventory import get_model
@@ -67,15 +67,16 @@ class Trainer:
                 #Forward pass
                 preds = self.model(images)
                 loss = self.criterion(preds, labels.long())
-
+                
                 # Backward and optimize
                 loss.backward()
                 self.optimizer.step()
 
-                self.train_metrics(preds, labels)
+                acc = self.train_metrics(preds, labels)
                 running_loss += loss.item() * images.size(0)
-                tepoch.set_postfix(loss = loss.item())
-                
+                tepoch.set_postfix(loss = loss.item(), accuracy = acc)
+
+        print("- Loss on train dataset : {}".format(running_loss / len(self.train_dataloader.dataset)))   
         self.training_loss.append(running_loss / len(self.train_dataloader.dataset))
 
     def testing_loop(self)->None:
@@ -86,13 +87,14 @@ class Trainer:
             for images, labels in self.test_dataloader:
                 images = images.to(self.device)
                 labels = labels.to(self.device)
-
                 labels = labels.squeeze(dim=1) 
                 preds = self.model(images)
                 loss = self.criterion(preds, labels.long())
                 self.test_metrics(preds,labels)
 
                 running_loss += loss.item() * images.size(0)
+
+        print("- Loss on test dataset : {}".format(running_loss / len(self.test_dataloader.dataset)))   
         self.testing_loss.append(running_loss / len(self.test_dataloader.dataset))
 
     def run(self, save_name:str = None)->None:
@@ -112,7 +114,7 @@ class Trainer:
             self.test_metrics.reset()
         
     def save_model(self,save_name:str):
-        torch.save(self.model.state_dict())
+        torch.save(self.model.state_dict(), save_name)
 
     def draw_loss(self):
         df = pd.DataFrame(dict(
@@ -129,8 +131,10 @@ def trainer_test():
 
     epochs = 10
     learning_rate = 0.001
-    
-    leNet5 = get_model("LeNet5")
+    class_number = 10
+    channel_number = 1 
+
+    leNet5 = get_model("LeNet5", channel_number=channel_number,class_number=class_number)
 
     metrics = MetricCollection([
             MulticlassAccuracy(num_classes=10)

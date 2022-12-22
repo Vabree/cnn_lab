@@ -18,11 +18,11 @@ def get_metric(task:str, metric_name: str, class_number: int):
             metricCollection.append(MultilabelAccuracy(class_number))
     elif task == "semseg":
         if metric_name['multiclass_accuracy']:
-            metricCollection.append(MulticlassAccuracy(class_number))
+            metricCollection.append(MulticlassAccuracy(num_classes = class_number, ignore_index = 255))
     else:
         raise NameError("Task doesn't exist")
     
-    return MetricCollection(metricCollection)
+    return MulticlassAccuracy(num_classes=class_number) #MetricCollection(metricCollection)
 
 
 def get_metric_test():

@@ -4,7 +4,8 @@ import torchvision.transforms.functional as F
 
 from torchsummary import summary 
 
-class CNNBlock(nn.Module):
+from torch.ao.quantization import QuantStub, DeQuantStub
+class CNNBlock(nn.Sequential):
     """
     Classique CNN Block avec une couche de convolution 3x3, une batch normalalisation 
     et une fonction d'activation ReLU
@@ -16,15 +17,11 @@ class CNNBlock(nn.Module):
         out_channels : int
     ) -> None:
 
-        super(CNNBlock, self).__init__()
-        self.cnnBlock = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size = 3),
+        super(CNNBlock, self).__init__(
+            nn.Conv2d(in_channels, out_channels, kernel_size = 3, bias=False, padding = 1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU()
         )
-
-    def forward(self,x: torch.Tensor) -> torch.Tensor :
-        return self.cnnBlock(x)
 
 class CNNBlockX2(nn.Module):
     """
@@ -105,21 +102,24 @@ class UNet(nn.Module):
     ) -> None:
 
         super(UNet,self).__init__()
-        self.entryDoubleBlock = CNNBlockX2(in_channels = input_channel, out_channels = 64)
-        self.encoderBlock1 = EncoderBlock(in_channels = 64, out_channels = 128)
-        self.encoderBlock2 = EncoderBlock(in_channels = 128, out_channels = 256)
-        self.encoderBlock3 = EncoderBlock(in_channels = 256, out_channels = 512)
+        self.entryDoubleBlock = CNNBlockX2(in_channels = input_channel, out_channels = 32)
+        self.encoderBlock1 = EncoderBlock(in_channels = 32, out_channels = 64)
+        self.encoderBlock2 = EncoderBlock(in_channels = 64, out_channels = 128)
+        self.encoderBlock3 = EncoderBlock(in_channels = 128, out_channels = 256)
 
-        self.bottleNeck = EncoderBlock(in_channels=512, out_channels=1024)
+        self.bottleNeck = EncoderBlock(in_channels=256, out_channels=512)
 
-        self.decoderBlock1 = DecoderBlock(in_channels = 1024, out_channels = 512)
-        self.decoderBlock2 = DecoderBlock(in_channels = 512, out_channels = 256)
-        self.decoderBlock3 = DecoderBlock(in_channels = 256, out_channels = 128)
-        self.decoderBlock4 = DecoderBlock(in_channels = 128, out_channels = 64)
+        self.decoderBlock1 = DecoderBlock(in_channels = 512, out_channels = 256)
+        self.decoderBlock2 = DecoderBlock(in_channels = 256, out_channels = 128)
+        self.decoderBlock3 = DecoderBlock(in_channels = 128, out_channels = 64)
+        self.decoderBlock4 = DecoderBlock(in_channels = 64, out_channels = 32)
 
-        self.outputConv = nn.Conv2d(in_channels = 64, out_channels = output_class, kernel_size = 1)
+        self.outputConv = nn.Conv2d(in_channels = 32, out_channels = output_class, kernel_size = 1)
         
+        self.quant = QuantStub()
+        self.dequant = DeQuantStub()
     def forward(self,x: torch.Tensor) -> torch.Tensor:
+        x = self.quant(x)
         x1 = self.entryDoubleBlock(x)
         x2 = self.encoderBlock1(x1)
         x3 = self.encoderBlock2(x2)
@@ -130,29 +130,30 @@ class UNet(nn.Module):
         x = self.decoderBlock3(x, x2)
         x = self.decoderBlock4(x, x1)
         x = self.outputConv(x)
+        x = self.dequant(x)
         return x
 
+    def fuse_model(self):
+        for m in self.modules():
+            if type(m) == CNNBlock:
+                torch.ao.quantization.fuse_modules(m, ['0', '1', '2'], inplace=True)
+
 def UNet_test():
-    device = torch.device("mps")
-    class_nb = 2
-    learning_rate = 0.001
+    device = torch.device("cuda")
+    class_nb = 3
 
-    X = torch.rand(1, 3, 572, 572, device=device)
-    model = UNet(3, class_nb).to(device)
-    summary(model,(3,572,572))
-"""
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    X = torch.rand(1, 3, 1024, 1216, device=device)
+    float_model = UNet(3, class_nb).to(device)
+    summary(float_model,(3,1024,1216))
+    torch.save(float_model,"Model.pth")
 
-    # Print model's state_dict
-    print("Model's state_dict:")
-    for param_tensor in model.state_dict():
-        print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+    float_model.qconfig = torch.ao.quantization.default_qconfig
+    print(float_model.qconfig)
+    torch.ao.quantization.prepare(float_model, inplace=True)
+    torch.ao.quantization.convert(float_model, inplace=True)
+    torch.save(float_model.state_dict(), "teeest")
+    #float_model.eval()
+    #print(float_model.fuse_model())
 
-
-    # Print optimizer's state_dict
-    print("Optimizer's state_dict:")
-    for var_name in optimizer.state_dict():
-        print(var_name, "\t", optimizer.state_dict()[var_name])
-"""
 if __name__ == "__main__":
     UNet_test()

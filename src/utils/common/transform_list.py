@@ -1,6 +1,6 @@
 import torch 
 import torchvision
-from torchvision.transforms import ToTensor, Compose, Resize
+from torchvision.transforms import ToTensor, Compose, Resize, RandomCrop, PILToTensor
 
 def get_transform(transform_number:int):
     if transform_number == 0:
@@ -25,7 +25,16 @@ def get_transform(transform_number:int):
             Resize((388,388)),
             ToTensor() 
         ])
-
+    elif transform_number == 4:
+        transform = Compose([
+            Resize((256,256)),
+            ToTensor() 
+        ])
+    elif transform_number == 5:
+        transform = Compose([
+            Resize((256,256)),
+            PILToTensor()   
+        ])
     else:
         raise NameError("transform number doesn't exist")
         

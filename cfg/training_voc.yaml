@@ -1,4 +1,4 @@
-device: "cpu"
+device: "cuda"
 #Task you want to perform
 #Available tasks : image_classification, semseg
 task: semseg 
@@ -15,12 +15,12 @@ model:
 dataset:
   type: VOC 
   channel_number: 3
-  train_path: data/VOC
-  test_path: data/VOC
+  train_path: F:\Datasets\VOC
+  test_path: F:\Datasets\VOC
   transforms:
-    train: 2
-    test: 2 
-    target: 3
+    train: 4
+    test: 4
+    target: 5
 
 #Loss function you want to use 
 #Available loss for semseg : crossentropy
@@ -28,12 +28,12 @@ criterion: CrossEntropyLoss
 
 #List if hyperparameters
 hyperparameters:
-  epochs: 10
+  epochs: 100
   learning_rate: 0.001
-  batch_size: 4
+  batch_size: 16
 
 #Save name insert None with you don't want to save the model
-saving_name: None
+saving_name: test.pth
 
 image_classification_metrics:
   class_number: 10
@@ -42,8 +42,7 @@ image_classification_metrics:
   multilabel_accuracy: 0
 
 semseg_metrics:
-  class_number: 21
   binary_accuracy: 0
-  multiclass_accuracy: 1 
+  multiclass_accuracy: 1
   multilabel_accuracy: 0
 
